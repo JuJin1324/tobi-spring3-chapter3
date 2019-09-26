@@ -27,4 +27,6 @@ ex) DaoFactory, applicationContext.xml
 
 * <b>DI</b>의 가장 중요한 개념은 제 3자의 도움을 통해 두 오브젝트 사이의 유연한 관계가 설정되도록 만든다는 것이다.
 
-
+### 익명 내부 클래스
+* 선언방식 : `new 인터페이스이름() { 클래스 본문 }`
+* ※ 주의 : spring framework 3 버전에서는 람다식을 사용하지 않는다. 사용시 junit test에서 ArrayIndexOutOfBoundsException 발생.

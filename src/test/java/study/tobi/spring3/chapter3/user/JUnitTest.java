@@ -35,6 +35,8 @@ public class JUnitTest {
     static Set<JUnitTest> testObjects = new HashSet<>();
     static ApplicationContext contextObject;
 
+    static UserDao daoObject;
+
     @Test
     public void verifyCreateJUnitTestObjectPerMethod_andCreateContextObjectOnlyOne1() {
         assertThat(testObjects, not(hasItem(this)));
@@ -73,5 +75,16 @@ public class JUnitTest {
     public void confirmUndefinedBean() {
 
         UserDao dao = context.getBean("undefined", UserDao.class);
+    }
+
+    @Test
+    public void verifyOnlyOneDaoObjectCreated1() {
+        assertThat(daoObject, either(is(nullValue())).or(is(autowiredDao)));
+        daoObject = autowiredDao;
+    }
+    @Test
+    public void verifyOnlyOneDaoObjectCreated2() {
+        assertThat(daoObject, either(is(nullValue())).or(is(autowiredDao)));
+        daoObject = autowiredDao;
     }
 }

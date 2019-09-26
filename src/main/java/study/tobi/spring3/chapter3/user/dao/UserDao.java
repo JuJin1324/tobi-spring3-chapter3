@@ -17,35 +17,20 @@ import java.sql.SQLException;
  * Created Date : 08/09/2019
  */
 
-@Setter
 @NoArgsConstructor
 public class UserDao {
     /* setter를 통한 DI */
-    private DataSource        dataSource;
-    private StatementStrategy statementStrategy;
+    @Setter
+    private DataSource dataSource;
 
     /*
      * 컨텍스트 : PreparedStatement를 실행하는 JDBC의 작업 흐름
      */
     public void jdbcContextWithStatementStrategy(StatementStrategy stmt) throws SQLException {
-
         @Cleanup
         Connection c = dataSource.getConnection();
         @Cleanup
         PreparedStatement ps = stmt.makePreparedStatement(c);
-
-        ps.executeUpdate();
-    }
-
-    public void add(User user) throws SQLException {
-        @Cleanup
-        Connection c = dataSource.getConnection();
-
-        @Cleanup
-        PreparedStatement ps = c.prepareStatement("insert into users(id, name, password) values (?, ?, ?)");
-        ps.setString(1, user.getId());
-        ps.setString(2, user.getName());
-        ps.setString(3, user.getPassword());
 
         ps.executeUpdate();
     }
@@ -75,8 +60,28 @@ public class UserDao {
 
     /* 클라이언트 : 전략 인터페이스인 StatementStrategy의 구현체를 컨텍스트로 주입 */
     public void deleteAll() throws SQLException {
-        StatementStrategy st = new DeleteAllStatement();
-        jdbcContextWithStatementStrategy(st);
+        jdbcContextWithStatementStrategy(new StatementStrategy() {
+            @Override
+            public PreparedStatement makePreparedStatement(Connection connection) throws SQLException {
+                return connection.prepareStatement("delete from users");
+            }
+        });
+    }
+
+    public void add(final User user) throws SQLException {
+
+        /* spring3 에서는 람다를 사용하지 않는다. ArrayIndexOutOfBoundsException 오류 발생 */
+        jdbcContextWithStatementStrategy(new StatementStrategy() {
+            @Override
+            public PreparedStatement makePreparedStatement(Connection connection) throws SQLException {
+                PreparedStatement ps = connection.prepareStatement("insert into users(id, name, password) values (?, ?, ?)");
+                ps.setString(1, user.getId());
+                ps.setString(2, user.getName());
+                ps.setString(3, user.getPassword());
+
+                return ps;
+            }
+        });
     }
 
     public int getCount() throws SQLException {
