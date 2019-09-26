@@ -11,8 +11,13 @@
         <property name="password" value="tiger" />
     </bean>
 
+    <bean id="jdbcContext" class="study.tobi.spring3.chapter3.user.dao.JdbcContext">
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+
     <bean id="userDao" class="study.tobi.spring3.chapter3.user.dao.UserDao">
         <property name="dataSource" ref="dataSource" />
+        <property name="jdbcContext" ref="jdbcContext" />
     </bean>
 
     <bean id="accountDao" class="study.tobi.spring3.chapter3.user.dao.AccountDao">

@@ -18,22 +18,11 @@ import java.sql.SQLException;
  */
 
 @NoArgsConstructor
+@Setter
 public class UserDao {
-    /* setter를 통한 DI */
-    @Setter
+
+    private JdbcContext jdbcContext;
     private DataSource dataSource;
-
-    /*
-     * 컨텍스트 : PreparedStatement를 실행하는 JDBC의 작업 흐름
-     */
-    public void jdbcContextWithStatementStrategy(StatementStrategy stmt) throws SQLException {
-        @Cleanup
-        Connection c = dataSource.getConnection();
-        @Cleanup
-        PreparedStatement ps = stmt.makePreparedStatement(c);
-
-        ps.executeUpdate();
-    }
 
     public User get(String id) throws SQLException {
         @Cleanup
@@ -60,7 +49,7 @@ public class UserDao {
 
     /* 클라이언트 : 전략 인터페이스인 StatementStrategy의 구현체를 컨텍스트로 주입 */
     public void deleteAll() throws SQLException {
-        jdbcContextWithStatementStrategy(new StatementStrategy() {
+        jdbcContext.workWithStatementStrategy(new StatementStrategy() {
             @Override
             public PreparedStatement makePreparedStatement(Connection connection) throws SQLException {
                 return connection.prepareStatement("delete from users");
@@ -71,7 +60,7 @@ public class UserDao {
     public void add(final User user) throws SQLException {
 
         /* spring3 에서는 람다를 사용하지 않는다. ArrayIndexOutOfBoundsException 오류 발생 */
-        jdbcContextWithStatementStrategy(new StatementStrategy() {
+        jdbcContext.workWithStatementStrategy(new StatementStrategy() {
             @Override
             public PreparedStatement makePreparedStatement(Connection connection) throws SQLException {
                 PreparedStatement ps = connection.prepareStatement("insert into users(id, name, password) values (?, ?, ?)");
