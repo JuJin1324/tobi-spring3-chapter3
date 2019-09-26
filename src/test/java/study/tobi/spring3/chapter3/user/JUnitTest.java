@@ -1,4 +1,4 @@
-package chapter2;
+package study.tobi.spring3.chapter3.user;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,7 +36,7 @@ public class JUnitTest {
     static ApplicationContext contextObject;
 
     @Test
-    public void test1() {
+    public void verifyCreateJUnitTestObjectPerMethod_andCreateContextObjectOnlyOne1() {
         assertThat(testObjects, not(hasItem(this)));
         testObjects.add(this);
 
@@ -45,7 +45,7 @@ public class JUnitTest {
     }
 
     @Test
-    public void test2() {
+    public void verifyCreateJUnitTestObjectPerMethod_andCreateContextObjectOnlyOne2() {
         assertThat(testObjects, not(hasItem(this)));
         testObjects.add(this);
 
@@ -54,7 +54,7 @@ public class JUnitTest {
     }
 
     @Test
-    public void test3() {
+    public void verifyCreateJUnitTestObjectPerMethod_andCreateContextObjectOnlyOne3() {
         assertThat(testObjects, not(hasItem(this)));
         testObjects.add(this);
 

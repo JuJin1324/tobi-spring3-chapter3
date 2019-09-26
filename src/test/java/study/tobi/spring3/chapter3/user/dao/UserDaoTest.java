@@ -1,4 +1,4 @@
-package chapter2.dao;
+package study.tobi.spring3.chapter3.user.dao;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import study.tobi.spring3.chapter3.user.dao.UserDao;
 import study.tobi.spring3.chapter3.user.entity.User;
 
 import java.sql.SQLException;

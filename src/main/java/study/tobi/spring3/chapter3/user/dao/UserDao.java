@@ -21,7 +21,21 @@ import java.sql.SQLException;
 @NoArgsConstructor
 public class UserDao {
     /* setter를 통한 DI */
-    private DataSource dataSource;
+    private DataSource        dataSource;
+    private StatementStrategy statementStrategy;
+
+    /*
+     * 컨텍스트 : PreparedStatement를 실행하는 JDBC의 작업 흐름
+     */
+    public void jdbcContextWithStatementStrategy(StatementStrategy stmt) throws SQLException {
+
+        @Cleanup
+        Connection c = dataSource.getConnection();
+        @Cleanup
+        PreparedStatement ps = stmt.makePreparedStatement(c);
+
+        ps.executeUpdate();
+    }
 
     public void add(User user) throws SQLException {
         @Cleanup
@@ -59,13 +73,10 @@ public class UserDao {
         return user;
     }
 
+    /* 클라이언트 : 전략 인터페이스인 StatementStrategy의 구현체를 컨텍스트로 주입 */
     public void deleteAll() throws SQLException {
-        @Cleanup
-        Connection c = dataSource.getConnection();
-
-        @Cleanup
-        PreparedStatement ps = c.prepareStatement("delete from users");
-        ps.executeUpdate();
+        StatementStrategy st = new DeleteAllStatement();
+        jdbcContextWithStatementStrategy(st);
     }
 
     public int getCount() throws SQLException {
@@ -82,4 +93,5 @@ public class UserDao {
 
         return count;
     }
+
 }
