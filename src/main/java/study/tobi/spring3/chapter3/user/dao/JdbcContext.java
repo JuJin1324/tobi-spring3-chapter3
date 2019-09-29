@@ -18,7 +18,6 @@ public class JdbcContext {
     /*
      * 컨텍스트 : PreparedStatement를 실행하는 JDBC의 작업 흐름
      */
-
     public void workWithStatementStrategy(StatementStrategy stmt) throws SQLException {
         @Cleanup
         Connection c = dataSource.getConnection();
@@ -26,5 +25,14 @@ public class JdbcContext {
         PreparedStatement ps = stmt.makePreparedStatement(c);
 
         ps.executeUpdate();
+    }
+
+    public void executeSql(final String query) throws SQLException {
+        workWithStatementStrategy(new StatementStrategy() {
+            @Override
+            public PreparedStatement makePreparedStatement(Connection connection) throws SQLException {
+                return connection.prepareStatement(query);
+            }
+        });
     }
 }

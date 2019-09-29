@@ -2,7 +2,6 @@ package study.tobi.spring3.chapter3.user.dao;
 
 import lombok.Cleanup;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.springframework.dao.EmptyResultDataAccessException;
 import study.tobi.spring3.chapter3.user.entity.User;
 
@@ -18,11 +17,17 @@ import java.sql.SQLException;
  */
 
 @NoArgsConstructor
-@Setter
 public class UserDao {
 
     private JdbcContext jdbcContext;
     private DataSource dataSource;
+
+    public void setDataSource(DataSource dataSource) {
+        jdbcContext = new JdbcContext();
+        jdbcContext.setDataSource(dataSource);
+
+        this.dataSource = dataSource;
+    }
 
     public User get(String id) throws SQLException {
         @Cleanup
@@ -49,12 +54,7 @@ public class UserDao {
 
     /* 클라이언트 : 전략 인터페이스인 StatementStrategy의 구현체를 컨텍스트로 주입 */
     public void deleteAll() throws SQLException {
-        jdbcContext.workWithStatementStrategy(new StatementStrategy() {
-            @Override
-            public PreparedStatement makePreparedStatement(Connection connection) throws SQLException {
-                return connection.prepareStatement("delete from users");
-            }
-        });
+        jdbcContext.executeSql("delete from users");
     }
 
     public void add(final User user) throws SQLException {
