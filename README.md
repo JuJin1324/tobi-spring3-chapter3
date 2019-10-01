@@ -91,7 +91,6 @@ public class Calculator {
             while ((line = br.readLine()) != null) {
                 sum += Integer.valueOf(line);
             }
-            return sum;
         } catch (IOException e) {
             e.printStackTrace();
             throw e;
@@ -139,7 +138,7 @@ public class Calculator {
 ```
 * 템플릿/콜백 패턴 적용하기 위해서 살펴볼 점 
     - 템플릿에 담을 반복되는 작업 흐름은 어떤 것인지 살펴본다.
-    - 템플릿이 콜백에게 전달해줄 내부의 정보는 무엇이고, 콜백이 탬플릿에게 돌려줄 내용은 무엇인지도 생각
+    - 템플릿이 콜백에게 <b>전달해줄 내부의 정보</b>는 무엇이고, 콜백이 탬플릿에게 <b>돌려줄 내용</b>은 무엇인지도 생각
     - 템플릿이 작업을 마친 뒤 클라이언트에게 전달해줘야 할 것도 생각
     
 * 메서드 내부의 공통 부분
@@ -338,7 +337,7 @@ public interface LineCallback<T> {
 
 * UserDao를 사용하는 사용자의 입장에서는 `getAll()` 메서드가 내부적으로 JdbcTemplate을 사용하지는, 개발자가  
 직접 만든 JDBC 코드를 사용하는지 알 수 없기 때문에 getAll의 예외로 0이 나오는지는 위의 코드와 같이 명시적으로  
-검증해줄 필요가 있다.
+검증해줄 필요가 있다. => DAO의 테스트 클래스의 경우 각 예외 사항 및 정상 동작에 대한 검증을 넣는 방향으로 테스트 클래스를 작성한다.
 
 * 스프링에서 지원하는 API의 경우 클래스 이름이 Template으로 끝나거나 인터페이스 이름이 Callback으로 끝난다면  
 템플릿/콜백 패턴이 적용된 것으로 보면 된다.
