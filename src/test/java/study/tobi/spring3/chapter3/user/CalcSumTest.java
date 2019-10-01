@@ -15,7 +15,7 @@ import static org.junit.Assert.assertThat;
  */
 public class CalcSumTest {
 
-    private String filepath;
+    private String     filepath;
     private Calculator calculator;
 
     @Before
