@@ -69,6 +69,15 @@ public class CalcSumTest {
     }
 }
 ```
+
+* numbers.txt
+```text
+1
+2
+3
+4
+```
+
 * Caculator 클래스
 ```java
 public class Calculator {
