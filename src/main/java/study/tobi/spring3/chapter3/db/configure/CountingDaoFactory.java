@@ -1,4 +1,4 @@
-package study.tobi.spring3.chapter3.user.dao;
+package study.tobi.spring3.chapter3.db.configure;
 
 import org.springframework.context.annotation.Configuration;
 

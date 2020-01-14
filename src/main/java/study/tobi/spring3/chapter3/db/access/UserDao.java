@@ -1,14 +1,15 @@
-package study.tobi.spring3.chapter3.user.dao;
+package study.tobi.spring3.chapter3.db.access;
 
 import lombok.NoArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import study.tobi.spring3.chapter3.user.entity.User;
+import study.tobi.spring3.chapter3.db.entity.User;
 
 import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Yoo Ju Jin(yjj@hanuritien.com)
@@ -22,22 +23,20 @@ public class UserDao {
     private RowMapper<User> userRowMapper;
 
     public void setDataSource(DataSource dataSource) {
-        jdbcTemplate = new JdbcTemplate(dataSource);
-        userRowMapper = new RowMapper<User>() {
-            @Override
-            public User mapRow(ResultSet resultSet, int i) throws SQLException {
-                /*
-                 * 이미 queryForObject 템플릿 내부에서 resultSet을 한번 next() 호출 후에
-                 * RowMapper 콜백 메서드를 호출하기 때문에 따로 resultSet.next() 메서드를 호출하지 않고
-                 * 바로 사용한다.
-                 */
-                User user = new User();
-                user.setId(resultSet.getString("id"));
-                user.setName(resultSet.getString("name"));
-                user.setPassword(resultSet.getString("password"));
 
-                return user;
-            }
+        jdbcTemplate = new JdbcTemplate(dataSource);
+        userRowMapper = (resultSet, i) -> {
+            /*
+             * 이미 queryForObject 템플릿 내부에서 resultSet을 한번 next() 호출 후에
+             * RowMapper 콜백 메서드를 호출하기 때문에 따로 resultSet.next() 메서드를 호출하지 않고
+             * 바로 사용한다.
+             */
+            User user = new User();
+            user.setId(resultSet.getString("id"));
+            user.setName(resultSet.getString("name"));
+            user.setPassword(resultSet.getString("password"));
+
+            return user;
         };
     }
 
@@ -58,7 +57,8 @@ public class UserDao {
     }
 
     public int getCount() {
-        return jdbcTemplate.queryForInt("select count(*) from users");
+        List<Map<String, Object>> mapList = jdbcTemplate.queryForList("select * from users");
+        return mapList.size();
     }
 
     public List<User> getAll() {

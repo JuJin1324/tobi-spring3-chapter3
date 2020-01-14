@@ -1,4 +1,4 @@
-package study.tobi.spring3.chapter3.user;
+package study.tobi.spring3.chapter3.db;
 
 import org.junit.Before;
 import org.junit.Test;

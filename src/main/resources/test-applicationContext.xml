@@ -11,15 +11,15 @@
         <property name="password" value="tiger" />
     </bean>
 
-    <bean id="userDao" class="study.tobi.spring3.chapter3.user.dao.UserDao">
+    <bean id="userDao" class="study.tobi.spring3.chapter3.db.access.UserDao">
         <property name="dataSource" ref="dataSource" />
     </bean>
 
-    <bean id="accountDao" class="study.tobi.spring3.chapter3.user.dao.AccountDao">
+    <bean id="accountDao" class="study.tobi.spring3.chapter3.db.access.AccountDao">
         <property name="dataSource" ref="dataSource" />
     </bean>
 
-    <bean id="messageDao" class="study.tobi.spring3.chapter3.user.dao.MessageDao">
+    <bean id="messageDao" class="study.tobi.spring3.chapter3.db.access.MessageDao">
         <property name="dataSource" ref="dataSource" />
     </bean>
 

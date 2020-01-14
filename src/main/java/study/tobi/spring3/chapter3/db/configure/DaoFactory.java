@@ -1,8 +1,11 @@
-package study.tobi.spring3.chapter3.user.dao;
+package study.tobi.spring3.chapter3.db.configure;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
+import study.tobi.spring3.chapter3.db.access.AccountDao;
+import study.tobi.spring3.chapter3.db.access.MessageDao;
+import study.tobi.spring3.chapter3.db.access.UserDao;
 
 import javax.sql.DataSource;
 

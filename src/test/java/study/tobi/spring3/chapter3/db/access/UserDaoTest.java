@@ -1,4 +1,4 @@
-package study.tobi.spring3.chapter3.user.dao;
+package study.tobi.spring3.chapter3.db.access;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -7,7 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import study.tobi.spring3.chapter3.user.entity.User;
+import study.tobi.spring3.chapter3.db.configure.TestDaoFactory;
+import study.tobi.spring3.chapter3.db.entity.User;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -21,7 +22,7 @@ import static org.junit.Assert.assertThat;
  */
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = "/test-applicationContext.xml")
+@ContextConfiguration(classes = TestDaoFactory.class)
 public class UserDaoTest {
 
     @Autowired

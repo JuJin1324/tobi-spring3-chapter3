@@ -1,4 +1,4 @@
-package study.tobi.spring3.chapter3.user;
+package study.tobi.spring3.chapter3.db;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -7,7 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import study.tobi.spring3.chapter3.user.dao.UserDao;
+import study.tobi.spring3.chapter3.db.access.UserDao;
+import study.tobi.spring3.chapter3.db.configure.JUnitTestFactory;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -15,7 +16,6 @@ import java.util.Set;
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.junit.internal.matchers.IsCollectionContaining.hasItem;
 import static org.junit.matchers.JUnitMatchers.either;
 
 /**
@@ -24,7 +24,7 @@ import static org.junit.matchers.JUnitMatchers.either;
  */
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = "/junit.xml")
+@ContextConfiguration(classes = JUnitTestFactory.class)
 public class JUnitTest {
     @Autowired
     ApplicationContext context;
