@@ -32,6 +32,7 @@ public class DaoFactory {
     public AccountDao accountDao() {
         AccountDao accountDao = new AccountDao();
         accountDao.setDataSource(dataSource());
+
         return accountDao;
     }
 
@@ -39,13 +40,9 @@ public class DaoFactory {
     public MessageDao messageDao() {
         MessageDao messageDao = new MessageDao();
         messageDao.setDataSource(dataSource());
+
         return messageDao;
     }
-
-//    @Bean
-//    public ConnectionMaker connectionMaker() {
-//        return new DConnectionMaker();
-//    }
 
     @Bean
     public DataSource dataSource() {

@@ -53,21 +53,53 @@ ex) DaoFactory, applicationContext.xml
 ### 람다(Lambda)
 메서드가 한 개인 익명 내부 클래스를 클래스 및 메서드명을 생략하여 익명 함수의 형태로 선언하는 방식. 해당 내부 클래스가 구현하는 인터페이스에 한 개의 메서드만 
 선언한다는 의미의 `@FunctionalInterface` 애노테이션 선언
-* 주의 : spring framework 3 버전에서는 람다식을 사용하지 않는다. 사용시 junit test에서 ArrayIndexOutOfBoundsException 발생.
-* 요구 : spring framework 버전 4.3.25.RELEASE 로 변경, junit 버전 4.12로 변경 
-* 선언방식 
-    1. 본문 2줄 이상 : `(메서드의 파라미터) -> { 메서드 본문 }`
-    2. 본문 1줄 : `() -> 본문`
-    3. 본문 1줄이면서 리턴까지 하는 경우 역시 2번을 사용하면 알아서 리턴.
+
+주의 : spring framework 3 버전에서는 람다식을 사용하지 않는다. 사용시 junit test에서 ArrayIndexOutOfBoundsException 발생.
+
+요구 : spring framework 버전 4.3.25.RELEASE 로 변경, junit 버전 4.12로 변경 
+
+선언방식 
+* 본문 2줄 이상 : `(메서드의 파라미터) -> { 메서드 본문 }`
+* 본문 1줄 : `() -> 본문`
+* 본문 1줄이면서 리턴까지 하는 경우 역시 2번을 사용하면 알아서 리턴.
 
 ## 3.4 컨텍스트와 DI
+### 3.4.1 JdbcContext의 분리
+전략 패턴의 구조로 본 구성도
+* UserDao의 메서드(add, deleteAll...등) : 클라이언트
+* jdbcContextWithStatementStrategy() 메서드 : 컨텍스트
+* jdbcContextWithStatementStrategy() 에서 주입받는 익명 클래스 : 개별 전략
 
-## 탬플릿과 콜백
-* 전략 패턴의 컨텍스트를 <b>템플릿</b>이라 부르고, 익명 내부 클래스로 만들어지는 오브젝트를 <b>콜백</b>이라고 부른다.
+클래스 분리
+* jdbcContextWithStatementStrategy() 메서드를 여러 DAO 클래스에서 사용할 수 있도록 클래스로 분리 => 클래스명 : JdbcContext
+* Connection 객체가 필요한 DataSource 객체는 UserDao가 아닌 JdbcContext가 필요하게 된다. (UserDao에서 아직 JdbcContext 객체를 사용하지 않는 메서드는 일단 논외)
+
+빈 의존관계 변경
+UserDao -> JdbcContext를 의존하고 있음. 하지만 기존의 의존관계와 다르게 UserDao가 의존하고 있는 JdbcContext는 인터페이스가 아니라 구체 클래스임.
+    * JdbcContext는 그 자체로 독립적인 JDBC 컨텍스트(로직의 구현)를 제공해주는 서비스 오브젝트로 의미가 있을 뿐 구현 방법이 바뀔 가능성이 없음.
+
+### 3.4.2 JdbcContext의 특별한 DI  
+JdbcContext를 Bean 객체로 만든 이유
+* JdbcContext를 싱글톤으로 관리하기 위해서 : JdbcContext는 DataSource 객체를 멤버변수로 가지지만 해당 값은 읽기 전용 값으로 상태 변화가 없음으로 JdbcContext는
+상태를 가지지 않는다.
+* JdbcContext 가 DI를 통해서 다른 빈(UserDao, AccountDao, MessageDao 등)에 의존하고 있기 때문인다.
+* DI를 위해서는 주입되는 오브젝트와 주입받는 오브젝트 양쪽 모두 스프링 빈으로 등록돼야 한다.
+* DB 인터페이스를 JDBC로 가져가게 되면 MySQL, MSSQL, Oracle 등의 어떤 DB로 교체해도 JdbcContext를 사용할 수 있으며 DB인터페이스가 변경되는 경우(JPA, 하이버네이트)
+에는 JdbcContext 자체를 교체해야하기 때문에 굳이 인터페이스로 둘 이유가 없다.
+
+코드를 이용하는 수동 DI
+* UserDao와 JdbcContext는 그 관계가 긴밀한 만큼 JdbcContext를 스프링 컨테이너에 빈으로 등록하지 않고 UserDao의 DataSource의 Setter 메서드에서
+JdbcContext 객체를 생성하여 파라미터로 전달받은 DataSource를 JdbcContext에 DI할 수도 있다.
+* 해당 방법은 JdbcContext를 Dao(UserDao, AccountDao, MessageDao 등) 마다 JdbcContext를 만드는 방식이 된다.
+* 장점 : DI의 근본적인 원칙에 부합하지 않는 구체적인 클래스와의 관계가 설정에 드러나지 않음.
+* 단점 : JdbcContext 싱글톤 객체로서 사용 불가능.
+
+## 3.5 탬플릿과 콜백
+전략 패턴의 컨텍스트를 <b>템플릿</b>이라 부르고, 익명 내부 클래스로 만들어지는 오브젝트를 <b>콜백</b>이라고 부른다.
 
 ### 콜백(callback) 
-* 실행되는 것을 목적으로 다른 오브젝트의 메서드에 전달되는 오브젝트
-* 파라미터로 전달되지만 값을 참조하기 위한 것이 아니라 <b>특정 로직을 담은 메서드를 실행</b>시키기 위해 사용한다.
+실행되는 것을 목적으로 다른 오브젝트의 메서드에 전달되는 오브젝트   
+파라미터로 전달되지만 값을 참조하기 위한 것이 아니라 <b>특정 로직을 담은 메서드를 실행</b>시키기 위해 사용한다.
 
 * 자바에선 메서드 자체를 파라미터로 전달할 방법이 없기 때문에 메서드가 담긴 오브젝트를 전달해야한다.
 * java 8부터 interface(단일 메서드) + 람다(lambda)를 통해서 콜백으로 메서드처럼 넘기는 것이 가능해졌다.
