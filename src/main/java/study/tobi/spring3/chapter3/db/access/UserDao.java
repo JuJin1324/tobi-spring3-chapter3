@@ -57,8 +57,7 @@ public class UserDao {
     }
 
     public int getCount() {
-        List<Map<String, Object>> mapList = jdbcTemplate.queryForList("select * from users");
-        return mapList.size();
+        return jdbcTemplate.queryForObject("select count(*) from users", Integer.class);
     }
 
     public List<User> getAll() {
