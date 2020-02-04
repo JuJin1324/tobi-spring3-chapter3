@@ -10,7 +10,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import study.tobi.spring3.chapter3.db.configure.TestDaoFactory;
 import study.tobi.spring3.chapter3.db.entity.User;
 
-import java.sql.SQLException;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -41,7 +40,7 @@ public class UserDaoTest {
     }
 
     @Test
-    public void addAndGet() throws SQLException {
+    public void addAndGet() {
 
         dao.deleteAll();
         assertThat(dao.getCount(), is(0));
@@ -76,7 +75,7 @@ public class UserDaoTest {
     }
 
     @Test(expected = EmptyResultDataAccessException.class)
-    public void getUserFailure() throws SQLException {
+    public void getUserFailure() {
 
         dao.deleteAll();
         assertThat(dao.getCount(), is(0));

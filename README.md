@@ -437,7 +437,7 @@ public void add(final User user) {
 }
 ```
 
-### 3.6.2 ~~queryForInt()~~ queryForObject()
+### 3.6.2 ~~queryForInt()~~ -> queryForObject()
 ```java
 public int getCount() {
     return jdbcTemplate.queryForObject("select count(*) from users", Integer.class);
@@ -445,19 +445,96 @@ public int getCount() {
 ```
 
 ### 3.6.3 queryForObject()
+getCount() 메서드에서 사용했던 ResultSetExtractor 콜백은 매개변수로 ResultSet을 한 번 전달받아 알아서 추출 작업을 모두 진행하였다.
 
+```java
+public User get(String id) {
+    return jdbcTemplate.queryForObject(
+            "select id, name, password from users where id = ?",
+            new Object[]{id},
+            (rs, rowNum) -> {
+                User user = new User();
+                user.setId(rs.getString("id"));
+                user.setName(rs.getString("name"));
+                user.setPassword(rs.getString("password"));
+                return user;
+            });
+}
+```
+get() 메서드에서는 quertForObject() 메서드에 RowMapper 콜백을 써서 SQL의 실행 결과 Row가 하나인 ResultSet을 콜백의 매개변수로 주기 때문에
+RowMapper 콜백은 여러번 불릴 수 있다.
 
-## 테스트 보완
-### 네거티브 테스트
-* 예외상황에 대한 테스트, 예를 들어 UserDao 클래스의 `get(String id)` 메서드 호출 시에 id가 없을 때는 어떻게 되는지,  
-`List<User> getAll()` 메서드 호출시 결과가 하나로 없는 경우에는 어떻게 되는지를 검증하는 것이 네거티브 테스트이다.
+첫 번째 파라미터는 Query, 두 번째는 ?에 바인딩할 값(뒤에 콜백 함수를 매개변수로 받아야하기 때문에 Object 배열 사용), 세번째 콜백 메서드
 
-* 같은 개발자가 만든 조회용 메서드들에 대해서도 어떤 메서드는 데이터가 없으면 null을 리턴하고,  
+queryForObject() 메서드는 SQL 실행 후 한 개의 Row만 얻을 것으로 기대한다. 그리고 ResultSet의 next()를 내부에서 실행하여 첫 번째 로우로 이동시킨
+후에 RowMapper 콜백에 ResultSet을 넘겨준다. RowMapper 콜백에서 next() 메서드 사용이 필요없이 그냥 rs.getString() 메서드를 사용하도록.
+
+### 3.6.4 query()
+<b>기능 정의와 테스트 작성</b> 
+RowMapper 사용을 위한 Users 테이블의 모든 사용자 정보를 가져오는 getAll() 메서드 생성하여 테스트까지 해본다.   
+하나의 Row를 User 오브젝트로 담아서 리턴했던 get() 메서드와는 달리 getAll() 메서드는 여러 Row를 오브젝트에 담기 때문에 `List<User>`로 리턴한다.   
+리스트에 담는 순서는 id 순으로 정렬해서 가져오도록 한다.   
+최소한 2가지 이상의 테스트 조건에 대해 기대한 결과를 확인해보는 것이 좋다. getAll() 메서드에 대한 테스트 메서드 getAll() 은 다음과 같다.
+```java
+@Test
+public void getAll() {
+    dao.deleteAll();
+    
+    dao.add(user1);
+    List<User> users1 = dao.getAll();
+    assertThat(users1.size(), is(1));
+    checkSameUser(user1, users1.get(0));
+    
+    dao.add(user2);
+    List<User> users2 = dao.getAll();
+    assertThat(users2.size(), is(2));
+    checkSameUser(user1, users2.get(0));
+    checkSameUser(user2, users2.get(1));
+    
+    dao.add(user3);
+    List<User> users3 = dao.getAll();
+    assertThat(users3.size(), is(3));
+    checkSameUser(user1, users3.get(0));
+    checkSameUser(user2, users3.get(1));
+    checkSameUser(user3, users3.get(2));
+}
+```
+반복되서 2개의 User 오브젝트를 비교하는 부분을 메서드로 분리하였다.
+```java
+private void checkSameUser(User user1, User user2) {
+    assertThat(user1.getId(), is(user2.getId()));
+    assertThat(user1.getName(), is(user2.getName()));
+    assertThat(user1.getPassword(), is(user2.getPassword()));
+}
+```
+
+<b>query() 템플릿을 이용하는 getAll() 구현</b>
+```java
+public List<User> getAll() {
+    return jdbcTemplate.query(
+            "select id, name, password from users",
+            (rs, rowNum) -> {
+                User user = new User();
+                user.setId(rs.getString("id"));
+                user.setName(rs.getString("name"));
+                user.setPassword(rs.getString("password"));
+                return user;
+            });
+}
+```
+첫 번째 파라미터는 SQL Query, 바인딩할 파라미터가 있으면 두번째 파라미터에 Object 배열 추가, 마지막 파라미터로 RowMapper 콜백.   
+RowMapper 콜백이 get() 메서드에서 사용했던 형태와 동일하지만 jdbcTemplate.query() 메서드 내부에서 콜백 함수가 여러번 불려서 `List<User>`를
+리턴하도록 했다는 차이점이 있다. 
+
+<b>테스트 보완</b>   
+예외상황에 대한 테스트, 예를 들어 UserDao 클래스의 `get(String id)` 메서드 호출 시에 id가 없을 때는 어떻게 되는지,  
+`List<User> getAll()` 메서드 호출시 결과가 하나로 없는 경우에는 어떻게 되는지를 검증하는 것이 <b>네거티브 테스트</b>이다.
+
+같은 개발자가 만든 조회용 메서드들에 대해서도 어떤 메서드는 데이터가 없으면 null을 리턴하고,  
 어떤 메서드는 빈(empty) 리스트 오브젝트를 리턴하고, 어떤 메서드는 예외를 던지고, 어떤 메서드는 NullPointerException  
 같은 런타임 예외가 발생하면서 뻗어버리기도 한다. 그래서 미리 예외상황에 대한 일관성 있는 기준을 정해두고 이를 테스트로 만들어 검증해둬야 한다.
 
-### UserDao의 getAll() 메서드 테스트
-* `List<User> getAll()` 메서드 내부에서 JdbcTemplate 클래스의 `query()` 메서드를 사용하며 해당 메서드가  
+`List<User> getAll()` 메서드 내부에서 JdbcTemplate 클래스의 `query()` 메서드를 사용하며 해당 메서드가 
 예외적인 경우에는 크기가 0인 리스트 오브젝트를 리턴한다.
 ```java
     @Test
@@ -473,12 +550,74 @@ public int getCount() {
     }
 ```
 
-* UserDao를 사용하는 사용자의 입장에서는 `getAll()` 메서드가 내부적으로 JdbcTemplate을 사용하지는, 개발자가  
-직접 만든 JDBC 코드를 사용하는지 알 수 없기 때문에 getAll의 예외로 0이 나오는지는 위의 코드와 같이 명시적으로  
-검증해줄 필요가 있다. => DAO의 테스트 클래스의 경우 각 예외 사항 및 정상 동작에 대한 검증을 넣는 방향으로 테스트 클래스를 작성한다.
+UserDao를 사용하는 사용자의 입장에서는 `getAll()` 메서드가 어떻게 동작하는지에만 관심이 있다. 
+내부적으로 JdbcTemplate을 사용하는지, 개발자가 직접 만든 JDBC 코드를 사용하는지를 아는 것은 관심 밖이기 때문에 
+getAll의 예외로 0이 나오는지는 위의 코드와 같이 명시적으로 검증해줄 필요가 있다. 
+=> DAO의 테스트 클래스의 경우 각 예외 사항 및 정상 동작에 대한 검증을 넣는 방향으로 테스트 클래스를 작성한다.
 
-* 스프링에서 지원하는 API의 경우 클래스 이름이 Template으로 끝나거나 인터페이스 이름이 Callback으로 끝난다면  
-템플릿/콜백 패턴이 적용된 것으로 보면 된다.
+### 3.6.5 재사용 가능한 콜백의 분리
+<b>DI를 위한 코드 정리</b>   
+UserDao 에서 더이상 필요없어진 멤버 변수 DataSource 지우고 DataSource에 대한 Setter 메서드에 JdbcTemplate 오브젝트 생성 부분만 남겨준다.
+
+Setter 메서드에서 다른 오브젝트를 생성하는 경우가 종종 있으며, DataSource의 Setter에서 DataSource는 Setting하지 않고 JdbcTemplate를 생성하는 것이
+찜찜하면 JdbcTemplate의 Setter로 수정하여 외부에서 생성한 JdbcTemplate을 주입하는 방법도 있다.
+
+<b>중복 제거</b>   
+get(), getAll() 에서 사용하는 동일한 콜백 오브젝트(RowMapper)를 멤버변수로 빼낸다.
+```java
+private RowMapper<User> userRowMapper = (rs, rowNum) -> {
+    /*
+     * 이미 queryForObject 템플릿 내부에서 resultSet을 한번 next() 호출 후에
+     * RowMapper 콜백 메서드를 호출하기 때문에 따로 resultSet.next() 메서드를 호출하지 않고
+     * 바로 사용한다.
+     */
+    User user = new User();
+    user.setId(rs.getString("id"));
+    user.setName(rs.getString("name"));
+    user.setPassword(rs.getString("password"));
+
+    return user;
+};
+```
+<b>템플릿/콜백 패턴과 UserDao</b>   
+UserDao는 User 테이블과 응집도가 높기 때문에 User 테이블 혹은 필드 정보가 바뀌면 UserDao의 거의 모든 코드가 함께 바뀐다.
+(응집도가 높다 = 하나의 모듈, 클래스가 하나의 책임 또는 관심사에만 집중되어 있다.)
+
+JDBC API와 사용 방식, 예외 처리, 리소스 반납, DB 연결에 관한 책임과 관심은 모두 JdbcTemplate에게 있어 변경이 일어난다고 해도 UserDao 코드에는 
+영향을 주지 않는다. 그런 면에서 책임이 다른 코드와 낮은 결합도를 유지하고 있다.
+(결합도가 낮다 = 책임과 관심사가 다른 오브젝트 또는 모듈과 느슨하게 연결된 형태를 유지한다.(클래스 사이의 관계보다는 클래스와 인터페이스 관계))
+
+나중에 UserDao를 개선할 수 있는 점 정리
+* userRowMapper가 인스턴스 변수로 설정되어 있고, 한 번 만들면 변경되지 않는 프로퍼티와 같은 성격을 띄고 있으니 아예 UserDao 빈의 DI용 프로퍼티로 만들 수 있다.
+```java
+@Bean
+public UserDao userDao() {
+    UserDao userDao = new UserDao();
+    userDao.setJdbcTemplate(jdbcTemplate());
+    userDao.setUserRowMapper(userRowMapper());
+
+    return userDao;
+}
+
+@Bean
+public JdbcTemplate jdbcTemplate() {
+    return new JdbcTemplate(dataSource());
+}
+
+@Bean
+public RowMapper<User> userRowMapper() {
+    return (rs, rowNum) -> {
+        User user = new User();
+        user.setId(rs.getString("id"));
+        user.setName(rs.getString("name"));
+        user.setPassword(rs.getString("password"));
+        return user;
+    };
+}
+```
+
+* DAO 메서드에서 사용하는 SQL 문장을 UserDao 코드가 아니라 외부 리소스에 담고 이를 읽어와 사용하게 하는 것이다. 이렇게 해두면 DB 테이블의 이름이나 필드 이름을
+변경하거나 SQL 쿼리를 최적화해야 할 때도 UserDao 코드에는 손을 댈 필요가 없다.
 
 ## 정리
 * 3장에서는 예외처리 및 안전한 리소스 반환을 보장해주는 DAO 코드를 만들었다.
