@@ -4,6 +4,21 @@
 ## 기초 셋팅
 [1장 오브젝트와 의존관계](https://github.com/JuJin1324/tobi-spring3-chapter1)의 기초 셋팅을 모두 가져옴(Maven 포함)
 
+스프링 버전 변경 : 3.1.4.RELEASE -> 4.3.25.RELEASE
+```xml
+<org.springframework-version>4.3.25.RELEASE</org.springframework-version>
+```
+
+junit : 4.7 -> 4.12
+```xml
+<dependency>
+    <groupId>junit</groupId>
+    <artifactId>junit</artifactId>
+    <version>4.7</version>
+    <scope>test</scope>
+</dependency>
+```
+
 ## 3.1 다시 보는 초난감 DAO
 2장까지의 UserDao에서 부족한점 : 예외상황에 대한 처리
 
