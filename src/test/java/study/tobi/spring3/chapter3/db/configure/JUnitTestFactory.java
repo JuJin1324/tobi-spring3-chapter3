@@ -2,6 +2,7 @@ package study.tobi.spring3.chapter3.db.configure;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 import study.tobi.spring3.chapter3.db.access.UserDao;
 
@@ -10,7 +11,6 @@ import javax.sql.DataSource;
 /**
  * Created by Yoo Ju Jin(jujin1324@daum.net)
  * Created Date : 2019-09-12
- *
  */
 
 @Configuration
@@ -21,9 +21,14 @@ public class JUnitTestFactory {
     @Bean
     public UserDao userDao() {
         UserDao userDao = new UserDao();
-        userDao.setDataSource(dataSource());
+        userDao.setJdbcTemplate(jdbcTemplate());
 
         return userDao;
+    }
+
+    @Bean
+    public JdbcTemplate jdbcTemplate() {
+        return new JdbcTemplate(dataSource());
     }
 
     @Bean

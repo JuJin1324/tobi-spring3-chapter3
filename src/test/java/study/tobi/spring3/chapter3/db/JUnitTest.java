@@ -79,12 +79,12 @@ public class JUnitTest {
 
     @Test
     public void verifyOnlyOneDaoObjectCreated1() {
-        assertThat(daoObject, either(is(nullValue())).or(is(autowiredDao)));
+        assertTrue(daoObject == null || daoObject == autowiredDao);
         daoObject = autowiredDao;
     }
     @Test
     public void verifyOnlyOneDaoObjectCreated2() {
-        assertThat(daoObject, either(is(nullValue())).or(is(autowiredDao)));
+        assertTrue(daoObject == null || daoObject == autowiredDao);
         daoObject = autowiredDao;
     }
 }
