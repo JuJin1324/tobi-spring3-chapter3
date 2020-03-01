@@ -83,15 +83,54 @@ public void deleteAll() throws SQLException {
 기능 확장이 필요한 오브젝트를 외부 인터페이스를 통해서 주입받도록 함.    
 클래스 레벨에서는 인터페이스를 통해서만 의존하도록 만드는 패턴.
 
-* 컨텍스트(Context) : 전반적 기능이 동작하는 클래스 ex) UserDao 혹은 메서드
+* 컨텍스트(Context) : 전반적 기능이 동작하는 클래스 ex) UserDao 의 jdbcContextWithStatementStrategy 메서드
+```java
+public class UserDao {
+    
+    public void jdbcContextWithStatementStrategy(StatementStrategy stmt) throws SQLException {
+        Connection c = null;
+        PreparedStatement ps = null;
+
+        try {
+            c = dataSource.getConnection();
+            ps = stmt.makePreparedStatement(c);
+
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw e;
+        } finally {
+            if (ps != null) { try { ps.close(); } catch (SQLException e) {} }
+            if (c != null) { try { c.close(); } catch (SQLException e) {} }
+        }
+    }
+}
+```
 
 * 전략(Strategy) : 기능 확장이 가능하도록 컨텍스트 내부에 선언된 인터페이스 ex) StatementStrategy
+```java
+@FunctionalInterface
+public interface StatementStrategy {
+    PreparedStatement makePreparedStatement(Connection connection) throws SQLException;
+}
+```
 
-* 클라이언트(Client) : 컨텍스트 클래스에 전략 인터페이스를 상속받은 클래스 중 선택하여 DI(의존 주입)을 해주는 클래스 혹은 설정파일 
-ex) DaoFactory, applicationContext.xml
+* 클라이언트(Client) : 컨텍스트 메서드에 전략 인터페이스를 상속받은 클래스 중 선택하여 DI(의존 주입)을 해주는 메서드 
+ex) UserDao의 deleteAll 메서드
+```java
+public class UserDao {
+    public void deleteAll() throws SQLException {
+        StatementStrategy st = new DeleteAllStatement();    // 선정한 전략 클래스의 오브젝트 생성
+        jdbcContextWithStatementStrategy(st);               // 컨텍스트 호출, 전략 오브젝트 전달
+    }
+}
+```
 
 ## 3.3 JDBC 전략 패턴의 최적화
 자주 변하는 부분은 전략(Strategy) 메서드로 분리, 자주 변하지 않는 부분은 템플릿(Template) 메서드로 분리하여 전략 메서드를 주입받음.
+
+* 전략 메서드 : StatementStrategy 의 makePreparedStatement() 메서드 
+
+* 텔플릿 메서드 : jdbcContextWithStatementStrategy
 
 ### 익명 내부 클래스
 이름을 갖지 않는 클래스. 클래스 선언과 오브젝트 생성이 결합된 형태로 만들어진다. 
@@ -109,6 +148,45 @@ ex) DaoFactory, applicationContext.xml
 * 본문 2줄 이상 : `(메서드의 파라미터) -> { 메서드 본문 }`
 * 본문 1줄 : `() -> 본문`
 * 본문 1줄이면서 리턴까지 하는 경우 역시 2번을 사용하면 알아서 리턴.
+
+예시 : UserDao의 add() 메서드
+```java
+public class UserDao {
+
+    public void add(User user) throws SQLException {
+        /* 
+         * 기존 방식 : 익명 클래스를 통해서 인터페이스를 add 메서드 내부에서 구현한 후에   
+         * 템플릿 메서드인 jdbcContextWithStatementStrategy 에 주입한다.
+         */
+        jdbcContextWithStatementStrategy(new StatementStrategy() {
+            @Override
+            public PreparedStatement makePreparedStatement(Connection connection) throws SQLException {
+                PreparedStatement ps = c.prepareStatement("insert into users(id, name, password) values(?, ?, ?)");
+                ps.setString(1, user.getId());;
+                ps.setString(2, user.getName());
+                ps.setString(3, user.getPassword());
+                
+                return ps;
+            }
+        });
+        
+        /* 
+         * 람다 방식 : 위에서 처럼 익명 클래스를 생성하는 이유는 makePreparedStatement 메서드를 주입하기 위함이다.
+         * 즉 메서드만 구현해서 주입하는 방식이 람다 방식이다.       
+         * 앞의 c는 makePreparedStatement 에서 매개변수로 받는 Connection 객체 c 이다.
+         * 구현 메서드인 makePreparedStatement 라는 이름은 생략한다.
+         */        
+        jdbcContextWithStatementStrategy(c -> {
+            PreparedStatement ps = c.prepareStatement("insert into users(id, name, password) values(?, ?, ?)");
+            ps.setString(1, user.getId());;
+            ps.setString(2, user.getName());
+            ps.setString(3, user.getPassword());
+
+            return ps;
+        });
+    }
+}
+```
 
 ## 3.4 컨텍스트와 DI
 ### 3.4.1 JdbcContext의 분리
